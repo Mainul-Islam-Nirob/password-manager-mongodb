@@ -33,7 +33,7 @@ function PasswordLIst({passwords, handleDelete, handleEdit}) {
                     </td>
                     <td className='py-2 border border-white text-center'>
                         <div className='flex items-center justify-center '>
-                            <span>{item.password}</span>
+                            <span>{'*'.repeat(item.password.length)}</span>
                             <CopyIcon text={item.password} />
                         </div>
                     </td>

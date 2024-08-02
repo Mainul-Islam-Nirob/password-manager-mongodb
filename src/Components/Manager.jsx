@@ -19,12 +19,15 @@ const Manager = () => {
     const [passwordArray, setPasswordArray] = useState([])
     const [editId, setEditId] = useState(null)
 
+    const getPasswords = async () => { 
+      let req = await fetch("http://localhost:3000/")
+      let passwords = await req.json()
+      console.log(passwords)
+      setPasswordArray(passwords)
+     }
 
     useEffect(() => {
-      let passwords = localStorage.getItem("passwords");
-      if (passwords) {
-        setPasswordArray(JSON.parse(passwords))
-      }
+      getPasswords()
     }, [])
     
     const showPassword = () => {
@@ -41,7 +44,7 @@ const Manager = () => {
 
     }
 
-    const savePassword = () => { 
+    const savePassword = async () => { 
         const { site, username, password } = form;
         if (site.length < 3 || username.length < 3 || password.length < 3) {
             toast.info('All fields must be at least 3 characters long', {
@@ -58,14 +61,18 @@ const Manager = () => {
       }
         const existingPassIndex = passwordArray.findIndex(item => item.id === editId)
         if (existingPassIndex !== -1) {
+          const updatedPassword = { ...form, id: editId };
           const updatedPasswordArray = passwordArray.map((item, index) => {
             if (index === existingPassIndex) {
               return { ...form, id: editId };
             }
             return item;
           });
+
+          console.log("updated array", updatedPasswordArray)
           setPasswordArray(updatedPasswordArray);
-          localStorage.setItem("passwords", JSON.stringify(updatedPasswordArray));
+          await fetch(`http://localhost:3000/${editId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify( updatedPassword) })
+
           setEditId(null);
           toast.success('Password Updated...', {
             position: "top-right",
@@ -78,8 +85,10 @@ const Manager = () => {
             theme: "dark",
             });
         } else {
-          setPasswordArray([...passwordArray, {...form, id: uuidv4()}]);
-          localStorage.setItem("passwords", JSON.stringify([...passwordArray, {...form, id: uuidv4()}]));
+          const newPassword = { ...form, id: uuidv4() };
+          setPasswordArray([...passwordArray, newPassword]);
+          // localStorage.setItem("passwords", JSON.stringify([...passwordArray, newPassword]));
+          await fetch("http://localhost:3000/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newPassword) })
 
           toast.success('Password Saved...', {
             position: "top-right",
@@ -100,11 +109,13 @@ const Manager = () => {
         });
       }
 
-     const deletePassword = (id) => {
+     const deletePassword = async(id) => {
         let c = confirm("Do you really want to delete this password?")
         if(c){
             setPasswordArray(passwordArray.filter(item=>item.id!==id))
-            localStorage.setItem("passwords", JSON.stringify(passwordArray.filter(item=>item.id!==id))) 
+            await fetch("http://localhost:3000/", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) })
+
+            // localStorage.setItem("passwords", JSON.stringify(passwordArray.filter(item=>item.id!==id))) 
             toast.error('Password Deleted...', {
                 position: "top-right",
                 autoClose: 5000,
